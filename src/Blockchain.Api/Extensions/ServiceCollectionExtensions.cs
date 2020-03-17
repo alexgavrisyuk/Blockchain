@@ -1,7 +1,9 @@
+using System;
 using Blockchain.Core.Commands;
 using Blockchain.Domain.AggregatesModel;
 using Blockchain.Infrastructure;
 using Blockchain.Infrastructure.Repositories;
+using Confluent.Kafka;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -41,6 +43,20 @@ namespace Blockchain.Api.Extensions
                 opt.UseSqlServer(connectionString);
                 opt.EnableSensitiveDataLogging();
             });
+        }
+        
+        public static void AddKafka(this IServiceCollection services)
+        {
+            var configuration = services.BuildServiceProvider().GetService<IConfiguration>();
+            var options = new ProducerConfig
+            {
+                BootstrapServers = configuration.GetValue("Kafka:BootstrapServers", string.Empty),
+                ClientId = configuration.GetValue("Kafka:ClientId", string.Empty)
+            };
+            
+            var producer = new ProducerBuilder<Null, string>(options).Build();
+
+            services.AddScoped(o => producer);
         }
     }
 }

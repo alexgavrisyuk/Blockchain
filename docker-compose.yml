@@ -1,0 +1,43 @@
+version: '3'
+services:
+  zookeeper-server:
+    image: 'bitnami/zookeeper:latest'
+    networks:
+      - kafka-net
+    ports:
+      - '2181:2181'
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+  kafka-server1:
+    image: 'bitnami/kafka:latest'
+    networks:
+      - kafka-net    
+    ports:
+      - '9092:9092'
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper-server:2181
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    depends_on:
+      - zookeeper-server
+  app:
+    build: .
+    networks:
+      - kafka-net
+    ports:
+      - "5000:5000"
+networks:
+  kafka-net:
+    driver: bridge
+  # producer:
+  #   image: qnib/golang-kafka-producer:2018-05-01.12
+  #   deploy:
+  #     replicas: 3
+  #   depends_on:
+  #     - broker
+  #   environment:
+  #     - KAFKA_BROKER=tasks.broker
+  #     - KAFKA_CREATE_TOPICS=test:1:1,scaled:2:2
+  #     - KAFKA_TOPIC=scaled
+  #     - MSG_COUNT=-1
+   
