@@ -1,12 +1,26 @@
-FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS build-env
+FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-buster-slim AS base
 WORKDIR /app
+EXPOSE 80
+EXPOSE 443
 
-COPY . ./
-RUN dotnet restore
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1-buster AS build
+WORKDIR /src
+COPY ["src/Blockchain.Api/Blockchain.Api.csproj", "app/"]
+COPY ["src/Blockchain.Core/Blockchain.Core.csproj", "app/"]
+COPY ["src/Blockchain.Domain/Blockchain.Domain.csproj", "app/"]
+COPY ["src/Blockchain.Infrastructure/Blockchain.Infrastructure.csproj", "app/"]
+RUN dotnet restore "app/Blockchain.Api.csproj"
+RUN dotnet restore "app/Blockchain.Core.csproj"
+RUN dotnet restore "app/Blockchain.Domain.csproj"
+RUN dotnet restore "app/Blockchain.Infrastructure.csproj"
+COPY . .
+WORKDIR /src/src/Blockchain.Api
+RUN dotnet build "Blockchain.Api.csproj" -c Release -o /app/build
 
-RUN dotnet publish -c Release -o out
+FROM build AS publish
+RUN dotnet publish "Blockchain.Api.csproj" -c Release -o /app/publish
 
-EXPOSE 5000
-
-WORKDIR /app/src/Blockchain.Api/bin/Release/netcoreapp3.1/
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "Blockchain.Api.dll"]

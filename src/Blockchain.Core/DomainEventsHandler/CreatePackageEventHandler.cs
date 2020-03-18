@@ -20,7 +20,7 @@ namespace Blockchain.Core.DomainEventsHandler
         {
             await _producer.ProduceAsync("package", new Message<Null, string>()
             {
-                Value = JsonSerializer.Serialize(notification)
+                Value = "asdsd"
             });
         }
     }
